@@ -1,8 +1,10 @@
 package com.example.stanleychin.myapplication;
 
 import android.Manifest;
+import android.content.ContentResolver;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
+import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
@@ -17,6 +19,7 @@ import android.util.SparseArray;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.content.Intent;
 import android.content.Context;
@@ -41,6 +44,9 @@ import org.json.JSONObject;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.URI;
+import java.net.URISyntaxException;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -144,7 +150,11 @@ public class MainActivity extends AppCompatActivity {
             launchMediaScanIntent();
             try {
                 System.out.println(imageUri.getPath());
-                Bitmap bitmap = decodeBitmapUri(this, imageUri);
+
+                //Bitmap bitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(), imageUri);
+                //Bitmap bitmap = decodeBitmapUri(this, imageUri);
+                Bitmap bitmap = BitmapFactory.decodeStream(getContentResolver().openInputStream(imageUri));
+
                 if (detector.isOperational() && bitmap != null) {
                     Frame frame = new Frame.Builder().setBitmap(bitmap).build();
                     SparseArray<Barcode> barcodes = detector.detect(frame);
@@ -161,6 +171,13 @@ public class MainActivity extends AppCompatActivity {
                 Toast.makeText(this, "Failed to load Image", Toast.LENGTH_SHORT)
                         .show();
                 Log.e(LOG_TAG, e.toString());
+                e.printStackTrace();
+            } finally {
+                if(deleteImage(this, imageUri)) {
+                    System.out.println("Image deleted!!!!");
+                } else {
+                    System.out.println("Fuck.");
+                }
             }
         }
     }
@@ -218,21 +235,26 @@ public class MainActivity extends AppCompatActivity {
         this.sendBroadcast(mediaScanIntent);
     }
 
-    private Bitmap decodeBitmapUri(Context ctx, Uri uri) throws FileNotFoundException {
-        int targetW = 600;
-        int targetH = 600;
-        BitmapFactory.Options bmOptions = new BitmapFactory.Options();
-        bmOptions.inJustDecodeBounds = true;
-        BitmapFactory.decodeStream(ctx.getContentResolver().openInputStream(uri), null, bmOptions);
-        int photoW = bmOptions.outWidth;
-        int photoH = bmOptions.outHeight;
+    private boolean deleteImage(Context ctx, Uri uri) {
 
-        int scaleFactor = Math.min(photoW / targetW, photoH / targetH);
-        bmOptions.inJustDecodeBounds = false;
-        bmOptions.inSampleSize = scaleFactor;
+        return (getContentResolver().delete(uri, null, null) > 0) ? true : false;
 
-        return BitmapFactory.decodeStream(ctx.getContentResolver()
-                .openInputStream(uri), null, bmOptions);
+
+//        File file = null;
+//        String imageFileName = uri.getLastPathSegment();
+//        String storageDir = getExternalFilesDir(Environment.DIRECTORY_PICTURES).getAbsolutePath();
+//
+//        file = new File(storageDir + uri.getPath());
+//
+//        if (file.exists()) {
+//            if (file.delete()) {
+//                System.out.println("file Deleted :" + file.getPath());
+//            } else {
+//                System.out.println("file not Deleted :" + file.getPath());
+//            }
+//        }
+//
+//        return file.delete();
     }
 
 
