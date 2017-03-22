@@ -1,16 +1,15 @@
 package com.example.stanleychin.myapplication;
 
 import android.Manifest;
-import android.content.ContentResolver;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
-import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
+import android.provider.SyncStateContract;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.FileProvider;
 import android.support.v7.app.AppCompatActivity;
@@ -19,7 +18,6 @@ import android.util.SparseArray;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.ImageView;
 import android.widget.TextView;
 import android.content.Intent;
 import android.content.Context;
@@ -33,7 +31,8 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
-import com.example.stanleychin.myapplication.ops.CallRest;
+import com.example.stanleychin.myapplication.ops.Constants;
+import com.example.stanleychin.myapplication.ops.RestUtilities;
 import com.google.android.gms.vision.Frame;
 import com.google.android.gms.vision.barcode.Barcode;
 import com.google.android.gms.vision.barcode.BarcodeDetector;
@@ -42,24 +41,21 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
-import java.net.URI;
-import java.net.URISyntaxException;
 
 public class MainActivity extends AppCompatActivity {
 
     private static final String LOG_TAG = "Barcode Scanner API";
     private static final int PHOTO_REQUEST = 10;
-    private BarcodeDetector detector;
-    private Uri imageUri;
     private static final int REQUEST_WRITE_PERMISSION = 20;
     private static final String SAVED_INSTANCE_URI = "uri";
     private static final String SAVED_INSTANCE_RESULT = "result";
-    String mCurrentPhotoPath;
+    private String mCurrentPhotoPath;
+    private BarcodeDetector mDetector;
+    private Uri mImageUri;
 
-    EditText upcText = null;
+    EditText firstUpcText = null;
+    EditText secondUpcText = null;
 
 
     @Override
@@ -67,20 +63,23 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        final CallRest cr = new CallRest();
+        final RestUtilities utils = new RestUtilities();
 
         final Button getButton = (Button) findViewById(R.id.getButton);
         final Button scanButton = (Button) findViewById(R.id.scanButton);
 
-        upcText = (EditText) findViewById(R.id.upcText);
-        upcText.setRawInputType(Configuration.KEYBOARD_QWERTY);
+        firstUpcText = (EditText) findViewById(R.id.firstUpcText);
+        firstUpcText.setRawInputType(Configuration.KEYBOARD_QWERTY);
+        secondUpcText = (EditText) findViewById(R.id.secondUpcText);
+        secondUpcText.setRawInputType(Configuration.KEYBOARD_QWERTY);
 
         final TextView outputText = (TextView) findViewById(R.id.output);
         final RequestQueue queue = Volley.newRequestQueue(this);
 
         if (savedInstanceState != null) {
-            imageUri = Uri.parse(savedInstanceState.getString(SAVED_INSTANCE_URI));
-            upcText.setText(savedInstanceState.getString(SAVED_INSTANCE_RESULT));
+            mImageUri = Uri.parse(savedInstanceState.getString(SAVED_INSTANCE_URI));
+            firstUpcText.setText(savedInstanceState.getString(SAVED_INSTANCE_RESULT));
+            secondUpcText.setText(savedInstanceState.getString(SAVED_INSTANCE_RESULT));
         }
 
         scanButton.setOnClickListener(new View.OnClickListener() {
@@ -90,19 +89,19 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        detector = new BarcodeDetector.Builder(getApplicationContext())
+        mDetector = new BarcodeDetector.Builder(getApplicationContext())
                 .setBarcodeFormats(Barcode.UPC_A | Barcode.PRODUCT)
                 .build();
-        if (!detector.isOperational()) {
-            upcText.setText("Could not set up the detector!");
+        if (!mDetector.isOperational()) {
+            Toast.makeText(MainActivity.this, "Could not set up the detector!", Toast.LENGTH_SHORT).show();
             return;
         }
 
         getButton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
 
-                final String upc = upcText.getText().toString();
-                String url = cr.getNutrientInformation(upc);
+                final String upc = firstUpcText.getText().toString();
+                String url = utils.getNutrientInformation(upc);
 
                 StringRequest stringRequest = new StringRequest(Request.Method.GET, url,
                         new Response.Listener<String>() {
@@ -113,13 +112,13 @@ public class MainActivity extends AppCompatActivity {
                                     outputText.setText(obj.toString(4));
                                     //055577312551
                                 } catch (JSONException e) {
-                                    e.printStackTrace();
+                                    Toast.makeText(MainActivity.this, "Error getting response.", Toast.LENGTH_SHORT).show();
                                 }
                             }
                         }, new Response.ErrorListener() {
                     @Override
                     public void onErrorResponse(VolleyError error) {
-                        outputText.setText("That didn't work!");
+                        Toast.makeText(MainActivity.this, "Barcode not found!", Toast.LENGTH_SHORT).show();
                     }
                 });
                 // Add the request to the RequestQueue.
@@ -149,35 +148,31 @@ public class MainActivity extends AppCompatActivity {
         if (requestCode == PHOTO_REQUEST && resultCode == RESULT_OK && null != data) {
             launchMediaScanIntent();
             try {
-                System.out.println(imageUri.getPath());
+                Bitmap bitmap = BitmapFactory.decodeStream(getContentResolver().openInputStream(mImageUri));
 
-                //Bitmap bitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(), imageUri);
-                //Bitmap bitmap = decodeBitmapUri(this, imageUri);
-                Bitmap bitmap = BitmapFactory.decodeStream(getContentResolver().openInputStream(imageUri));
-
-                if (detector.isOperational() && bitmap != null) {
+                if (mDetector.isOperational() && bitmap != null) {
                     Frame frame = new Frame.Builder().setBitmap(bitmap).build();
-                    SparseArray<Barcode> barcodes = detector.detect(frame);
-                    Barcode code = barcodes.valueAt(0);
-                    upcText.setText(code.rawValue + "\n");
+                    SparseArray<Barcode> barcodes = mDetector.detect(frame);
 
                     if (barcodes.size() == 0) {
-                        upcText.setText("Scan Failed: Found nothing to scan");
+                        Toast.makeText(this, "Could not detect any barcodes.", Toast.LENGTH_SHORT).show();
+                    } else {
+                        Barcode code = barcodes.valueAt(0);
+                        firstUpcText.setText(code.rawValue + "\n");
+
+                        code = barcodes.valueAt(1);
+                        secondUpcText.setText(code.rawValue + "\n");
                     }
+
                 } else {
-                    upcText.setText("Could not set up the detector!");
+                    Toast.makeText(MainActivity.this, "Could not set up the detector!", Toast.LENGTH_SHORT).show();
                 }
             } catch (Exception e) {
-                Toast.makeText(this, "Failed to load Image", Toast.LENGTH_SHORT)
-                        .show();
+                Toast.makeText(this, "Failed to load Image", Toast.LENGTH_SHORT).show();
                 Log.e(LOG_TAG, e.toString());
                 e.printStackTrace();
             } finally {
-                if(deleteImage(this, imageUri)) {
-                    System.out.println("Image deleted!!!!");
-                } else {
-                    System.out.println("Fuck.");
-                }
+                deleteImage(this, mImageUri);
             }
         }
     }
@@ -192,15 +187,14 @@ public class MainActivity extends AppCompatActivity {
             try {
                 photoFile = createImageFile();
             } catch (IOException ex) {
-                // Error occurred while creating the File
-
+                Toast.makeText(this, "Failed to take image", Toast.LENGTH_SHORT).show();
             }
             // Continue only if the File was successfully created
             if (photoFile != null) {
-                imageUri = FileProvider.getUriForFile(this,
-                        "com.example.android.fileprovider",
+                mImageUri = FileProvider.getUriForFile(this,
+                        Constants.ANDROID_ATTRIBUTE_FILE_PROVIDER,
                         photoFile);
-                intent.putExtra(MediaStore.EXTRA_OUTPUT, imageUri);
+                intent.putExtra(MediaStore.EXTRA_OUTPUT, mImageUri);
                 startActivityForResult(intent, PHOTO_REQUEST);
             }
         }
@@ -222,16 +216,17 @@ public class MainActivity extends AppCompatActivity {
     }
     @Override
     protected void onSaveInstanceState(Bundle outState) {
-        if (imageUri != null) {
-            outState.putString(SAVED_INSTANCE_URI, imageUri.toString());
-            outState.putString(SAVED_INSTANCE_RESULT, upcText.getText().toString());
+        if (mImageUri != null) {
+            outState.putString(SAVED_INSTANCE_URI, mImageUri.toString());
+            outState.putString(SAVED_INSTANCE_RESULT, firstUpcText.getText().toString());
+            outState.putString(SAVED_INSTANCE_RESULT, secondUpcText.getText().toString());
         }
         super.onSaveInstanceState(outState);
     }
 
     private void launchMediaScanIntent() {
         Intent mediaScanIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
-        mediaScanIntent.setData(imageUri);
+        mediaScanIntent.setData(mImageUri);
         this.sendBroadcast(mediaScanIntent);
     }
 
@@ -239,22 +234,6 @@ public class MainActivity extends AppCompatActivity {
 
         return (getContentResolver().delete(uri, null, null) > 0) ? true : false;
 
-
-//        File file = null;
-//        String imageFileName = uri.getLastPathSegment();
-//        String storageDir = getExternalFilesDir(Environment.DIRECTORY_PICTURES).getAbsolutePath();
-//
-//        file = new File(storageDir + uri.getPath());
-//
-//        if (file.exists()) {
-//            if (file.delete()) {
-//                System.out.println("file Deleted :" + file.getPath());
-//            } else {
-//                System.out.println("file not Deleted :" + file.getPath());
-//            }
-//        }
-//
-//        return file.delete();
     }
 
 

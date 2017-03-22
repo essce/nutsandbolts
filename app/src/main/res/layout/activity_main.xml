@@ -15,16 +15,42 @@
             android:layout_height="wrap_content"
             android:gravity="center"
             android:weightSum="10">
-            <EditText
-                android:id="@+id/upcText"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:ems="10"
-                android:inputType="textPersonName"
-                tools:layout_editor_absoluteX="98dp"
-                tools:layout_editor_absoluteY="30dp"
-                android:hint="Enter UPC Code" />
-            </TableRow>
+
+        </TableRow>
+
+        <EditText
+            android:id="@+id/firstUpcText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ems="10"
+            android:hint="Enter UPC Code"
+            android:inputType="textPersonName"
+            tools:layout_editor_absoluteX="98dp"
+            tools:layout_editor_absoluteY="30dp" />
+
+        <EditText
+            android:id="@+id/secondUpcText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ems="10"
+            android:hint="Enter UPC Code"
+            android:inputType="textPersonName"
+            tools:layout_editor_absoluteX="98dp"
+            tools:layout_editor_absoluteY="30dp" />
+
+        <TableRow
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content">
+
+        </TableRow>
+
+        <Button
+            android:id="@+id/getButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Get Food"
+            tools:layout_editor_absoluteX="431dp"
+            tools:layout_editor_absoluteY="709dp" />
 
         <TableRow
             android:layout_width="wrap_content"
@@ -35,18 +61,6 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="Scan Barcode" />
-
-            <Button
-                android:id="@+id/getButton"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Get Food"
-                tools:layout_editor_absoluteX="431dp"
-                tools:layout_editor_absoluteY="709dp" />
-        </TableRow>
-        <TableRow
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content">
 
             <TextView
                 android:id="@+id/output"
