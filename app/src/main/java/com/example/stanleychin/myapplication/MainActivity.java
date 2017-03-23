@@ -31,6 +31,7 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
+import com.example.stanleychin.myapplication.exceptions.ResponseErrorException;
 import com.example.stanleychin.myapplication.ops.Constants;
 import com.example.stanleychin.myapplication.ops.RestUtilities;
 import com.google.android.gms.vision.Frame;
@@ -42,6 +43,7 @@ import org.json.JSONObject;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -101,30 +103,20 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View v) {
 
                 final String upc = firstUpcText.getText().toString();
-                String url = utils.getNutrientInformation(upc);
 
-                StringRequest stringRequest = new StringRequest(Request.Method.GET, url,
-                        new Response.Listener<String>() {
-                            @Override
-                            public void onResponse(String response) {
-                                try {
-                                    JSONObject obj = new JSONObject(response);
-                                    outputText.setText(obj.toString(4));
-                                    //055577312551
-                                } catch (JSONException e) {
-                                    Toast.makeText(MainActivity.this, "Error getting response.", Toast.LENGTH_SHORT).show();
-                                }
-                            }
-                        }, new Response.ErrorListener() {
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
+                if (upc == null) {
+                    Toast.makeText(MainActivity.this, "Scan or input barcodes first!", Toast.LENGTH_SHORT).show();
+                } else {
+                    List<String> features;
+                    try {
+                        features = utils.makeRequest(queue, upc, getApplicationContext(), outputText);
+
+                        outputText.setText(sb.toString());
+                    } catch (ResponseErrorException re) {
                         Toast.makeText(MainActivity.this, "Barcode not found!", Toast.LENGTH_SHORT).show();
                     }
-                });
-                // Add the request to the RequestQueue.
-                queue.add(stringRequest);
+                }
 
-                //outputText.setText(response);
             }
         });
     }
@@ -132,20 +124,19 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        switch (requestCode) {
-            case REQUEST_WRITE_PERMISSION:
-                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    takePicture();
-                } else {
-                    Toast.makeText(MainActivity.this, "Permission Denied!", Toast.LENGTH_SHORT).show();
-                }
+        if (requestCode == REQUEST_WRITE_PERMISSION) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                takePicture();
+            } else {
+                Toast.makeText(MainActivity.this, "Permission Denied!", Toast.LENGTH_SHORT).show();
+            }
         }
     }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 
-        if (requestCode == PHOTO_REQUEST && resultCode == RESULT_OK && null != data) {
+        if (requestCode == PHOTO_REQUEST && resultCode == RESULT_OK && data != null) {
             launchMediaScanIntent();
             try {
                 Bitmap bitmap = BitmapFactory.decodeStream(getContentResolver().openInputStream(mImageUri));
@@ -170,7 +161,6 @@ public class MainActivity extends AppCompatActivity {
             } catch (Exception e) {
                 Toast.makeText(this, "Failed to load Image", Toast.LENGTH_SHORT).show();
                 Log.e(LOG_TAG, e.toString());
-                e.printStackTrace();
             } finally {
                 deleteImage(this, mImageUri);
             }
@@ -214,6 +204,7 @@ public class MainActivity extends AppCompatActivity {
         mCurrentPhotoPath = image.getAbsolutePath();
         return image;
     }
+
     @Override
     protected void onSaveInstanceState(Bundle outState) {
         if (mImageUri != null) {
@@ -232,7 +223,7 @@ public class MainActivity extends AppCompatActivity {
 
     private boolean deleteImage(Context ctx, Uri uri) {
 
-        return (getContentResolver().delete(uri, null, null) > 0) ? true : false;
+        return (getContentResolver().delete(uri, null, null) > 0);
 
     }
 
