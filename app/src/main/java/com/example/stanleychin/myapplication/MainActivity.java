@@ -33,6 +33,7 @@ import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 import com.example.stanleychin.myapplication.exceptions.ResponseErrorException;
 import com.example.stanleychin.myapplication.ops.Constants;
+import com.example.stanleychin.myapplication.ops.ResponseParser;
 import com.example.stanleychin.myapplication.ops.RestUtilities;
 import com.google.android.gms.vision.Frame;
 import com.google.android.gms.vision.barcode.Barcode;
@@ -44,6 +45,7 @@ import org.json.JSONObject;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
+import java.util.logging.Level;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -101,28 +103,59 @@ public class MainActivity extends AppCompatActivity {
 
         getButton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
+                //TODO: Move functionality to RestUtilities but preserve asychronous behaviour of volley
 
                 final String upc = firstUpcText.getText().toString();
-
-                if (upc == null) {
+                Log.d(Level.SEVERE.toString(), "upc: " + upc);
+                if (upc.equals("")) {
                     Toast.makeText(MainActivity.this, "Scan or input barcodes first!", Toast.LENGTH_SHORT).show();
                 } else {
                     List<String> features;
-                    try {
-                        features = utils.makeRequest(queue, upc, getApplicationContext(), outputText);
+                    String url = utils.getNutrientInformation(upc);
+                    Log.d(Level.SEVERE.toString(), "url: " + url);
 
-                        outputText.setText(sb.toString());
-                    } catch (ResponseErrorException re) {
-                        Toast.makeText(MainActivity.this, "Barcode not found!", Toast.LENGTH_SHORT).show();
-                    }
+                    StringRequest stringRequest = new StringRequest(Request.Method.GET, url,
+                            new Response.Listener<String>() {
+                                @Override
+                                public void onResponse(String response) {
+                                    try {
+                                        Log.d(Level.SEVERE.toString(), "response: \n" + response);
+                                        JSONObject obj = new JSONObject(response);
+                                        ResponseParser rp = new ResponseParser(obj);
+                                        List<String> features = rp.getFeatures();
+                                        StringBuilder sb = new StringBuilder();
+                                        sb.append("List of nutrients");
+                                        sb.append("\n");
+                                        for (String feature : features) {
+                                            sb.append(feature);
+                                            sb.append("\n");
+                                        }
+                                        outputText.setText(sb.toString());
+                                    } catch (JSONException e) {
+                                        Toast.makeText(MainActivity.this, "Error with JSON parsing.", Toast.LENGTH_SHORT).show();
+                                        Log.d(Level.SEVERE.toString(), "Error with JSON parsing.");
+
+                                    }
+                                }
+                            }, new Response.ErrorListener() {
+                        @Override
+                        public void onErrorResponse(VolleyError error) {
+                            Toast.makeText(MainActivity.this, "Error getting response.", Toast.LENGTH_SHORT).show();
+                            Log.d(Level.SEVERE.toString(), "Error getting response.");
+
+                        }
+                    });
+
+                    //add request to the queue
+                    queue.add(stringRequest);
                 }
-
             }
         });
     }
 
     @Override
-    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+    public void onRequestPermissionsResult(int requestCode, String[] permissions,
+                                           int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == REQUEST_WRITE_PERMISSION) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {

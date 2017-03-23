@@ -52,39 +52,8 @@ public class RestUtilities {
         return builder.build().toString();
     }
 
-    public List<String> makeRequest(RequestQueue queue, String upc, Context ctx, TextView output) throws ResponseErrorException {
-        String url = getNutrientInformation(upc);
-        this.context = ctx.getApplicationContext();
-        final String result;
-        StringRequest stringRequest = new StringRequest(Request.Method.GET, url,
-                new Response.Listener<String>() {
-                    @Override
-                    public void onResponse(String response) {
-                        try {
-                            JSONObject obj = new JSONObject(response);
-                            ResponseParser rp = new ResponseParser(obj);
-                            List<String> features = rp.getFeatures();
-                            StringBuilder sb = new StringBuilder();
-                            for (String feature : features) {
-                                sb.append(feature);
-                            }
-                            output.setText(sb.toString());
-                            //055577312551
-                        } catch (JSONException e) {
-                            Toast.makeText(context, "Error getting response.", Toast.LENGTH_SHORT).show();
-                        }
-                    }
-                }, new Response.ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError error) {
-                Toast.makeText(context, "Error getting response.", Toast.LENGTH_SHORT).show();
-            }
-        });
-
-
-        // Add the request to the RequestQueue.
-        queue.add(stringRequest);
-
-        return null;
-    }
+//    public List<String> makeRequest(RequestQueue queue, String upc, Context ctx, TextView output) throws ResponseErrorException {
+//        //TODO: Move functionality to RestUtilities but preserve asynchronous behaviour of volley
+//        return null;
+//    }
 }
