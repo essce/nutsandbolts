@@ -23,7 +23,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.stanleychin.myapplication.interfaces.VolleyCallback;
-import com.example.stanleychin.myapplication.ops.Constants;
+import com.example.stanleychin.myapplication.constants.APIConstants;
 import com.example.stanleychin.myapplication.ops.RestUtilities;
 import com.google.android.gms.vision.Frame;
 import com.google.android.gms.vision.barcode.Barcode;
@@ -92,8 +92,10 @@ public class MainActivity extends AppCompatActivity {
                 //TODO: Move functionality to RestUtilities but preserve asynchronous behaviour of volley
 
                 final String firstUpc = firstUpcText.getText().toString();
-
                 final String secondUpc = secondUpcText.getText().toString();
+                // sample upc codes
+                // 068200010113
+                // 057000330002
 
                 utils.getNutritionInformation(firstUpc, MainActivity.this, new VolleyCallback() {
                     @Override
@@ -178,7 +180,7 @@ public class MainActivity extends AppCompatActivity {
             // Continue only if the File was successfully created
             if (photoFile != null) {
                 mImageUri = FileProvider.getUriForFile(this,
-                        Constants.ANDROID_ATTRIBUTE_FILE_PROVIDER,
+                        APIConstants.ANDROID_ATTRIBUTE_FILE_PROVIDER,
                         photoFile);
                 intent.putExtra(MediaStore.EXTRA_OUTPUT, mImageUri);
                 startActivityForResult(intent, PHOTO_REQUEST);

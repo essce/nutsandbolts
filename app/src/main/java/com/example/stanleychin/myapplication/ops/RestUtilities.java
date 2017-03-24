@@ -16,6 +16,7 @@ import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 import com.example.stanleychin.myapplication.MainActivity;
+import com.example.stanleychin.myapplication.constants.APIConstants;
 import com.example.stanleychin.myapplication.interfaces.VolleyCallback;
 
 import org.json.JSONException;
@@ -40,12 +41,12 @@ public class RestUtilities {
     }
 
     private String buildUrl(String upc) {
-        String nutritionixId = Constants.NUTRITION_API_ID;
-        String nutritionixKey = Constants.NUTRITION_API_KEY;
+        String nutritionixId = APIConstants.NUTRITION_API_ID;
+        String nutritionixKey = APIConstants.NUTRITION_API_KEY;
 
         Uri.Builder builder = new Uri.Builder();
         builder.scheme("https")
-                .authority(Constants.NUTRITION_API_DOMAIN)
+                .authority(APIConstants.NUTRITION_API_DOMAIN)
                 .appendPath(NUTRITION_API_VERSION)
                 .appendPath(NUTRITION_API_ITEM)
                 .appendQueryParameter(NUTRITION_API_UPC, upc)
@@ -56,7 +57,7 @@ public class RestUtilities {
     }
 
     public void getNutritionInformation(String upc, MainActivity _context, final VolleyCallback callback) {
-        
+
         if (upc.equals("") ) {
             return;
         }
