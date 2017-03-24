@@ -6,7 +6,7 @@ package com.example.stanleychin.myapplication.ops;
 
 import android.content.Context;
 import android.net.Uri;
-import android.widget.TextView;
+import android.util.Log;
 import android.widget.Toast;
 
 import com.android.volley.Request;
@@ -14,13 +14,14 @@ import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
+import com.android.volley.toolbox.Volley;
 import com.example.stanleychin.myapplication.MainActivity;
-import com.example.stanleychin.myapplication.exceptions.ResponseErrorException;
+import com.example.stanleychin.myapplication.interfaces.VolleyCallback;
 
 import org.json.JSONException;
-import org.json.JSONObject;
 
 import java.util.List;
+import java.util.logging.Level;
 
 public class RestUtilities {
     private static final String NUTRITION_API_VERSION = "v1_1";
@@ -28,12 +29,14 @@ public class RestUtilities {
     private static final String NUTRITION_API_UPC = "upc";
     private static final String NUTRITION_API_ID_LABEL = "appId";
     private static final String NUTRITION_API_KEY_LABEL = "appKey";
+    private static final String TESTING_REQUEST = "https://httpbin.org/get";
+
     protected Context context;
+    private StringBuilder mBuildOutput;
 
-    public String getNutrientInformation(String upc) {
 
-        return buildUrl(upc);
-
+    private String buildUrlFake(String upc) {
+        return TESTING_REQUEST;
     }
 
     private String buildUrl(String upc) {
@@ -52,8 +55,46 @@ public class RestUtilities {
         return builder.build().toString();
     }
 
-//    public List<String> makeRequest(RequestQueue queue, String upc, Context ctx, TextView output) throws ResponseErrorException {
-//        //TODO: Move functionality to RestUtilities but preserve asynchronous behaviour of volley
-//        return null;
-//    }
+    public void getNutritionInformation(String upc, MainActivity _context, final VolleyCallback callback) {
+        
+        if (upc.equals("") ) {
+            return;
+        }
+
+        this.context = _context;
+        RequestQueue queue = Volley.newRequestQueue(context);
+
+        String url = buildUrl(upc);
+        Log.d("getNutritionInformation", "url: " + url);
+
+        StringRequest stringRequest = new StringRequest(Request.Method.GET, url,
+                new Response.Listener<String>() {
+                    @Override
+                    public void onResponse(String response) {
+                        try {
+                            Log.d("onResponse", "response: " + response);
+
+                            ResponseParser rp = new ResponseParser(response);
+                            List<String> nutritionFeatures = rp.getFeatures();
+                            String nutritionFeaturesString = rp.printFeatures(nutritionFeatures);
+                            Log.d("onResponse", "features: " + nutritionFeaturesString);
+
+                            callback.onSuccess(nutritionFeaturesString);
+                        } catch (JSONException e) {
+                            Toast.makeText(context, "Error with JSON parsing.", Toast.LENGTH_SHORT).show();
+                            Log.d(Level.SEVERE.toString(), "Error with JSON parsing.");
+
+                        }
+                    }
+                }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                Toast.makeText(context, "Error getting response.", Toast.LENGTH_SHORT).show();
+                Log.d(Level.SEVERE.toString(), "Error getting response.");
+            }
+        });
+
+        //add request to the queue
+        queue.add(stringRequest);
+    }
 }

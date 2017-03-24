@@ -1,6 +1,8 @@
 package com.example.stanleychin.myapplication;
 
 import android.Manifest;
+import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
@@ -9,7 +11,6 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
-import android.provider.SyncStateContract;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.FileProvider;
 import android.support.v7.app.AppCompatActivity;
@@ -19,33 +20,17 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
-import android.content.Intent;
-import android.content.Context;
-
 import android.widget.Toast;
 
-
-import com.android.volley.Request;
-import com.android.volley.RequestQueue;
-import com.android.volley.Response;
-import com.android.volley.VolleyError;
-import com.android.volley.toolbox.StringRequest;
-import com.android.volley.toolbox.Volley;
-import com.example.stanleychin.myapplication.exceptions.ResponseErrorException;
+import com.example.stanleychin.myapplication.interfaces.VolleyCallback;
 import com.example.stanleychin.myapplication.ops.Constants;
-import com.example.stanleychin.myapplication.ops.ResponseParser;
 import com.example.stanleychin.myapplication.ops.RestUtilities;
 import com.google.android.gms.vision.Frame;
 import com.google.android.gms.vision.barcode.Barcode;
 import com.google.android.gms.vision.barcode.BarcodeDetector;
 
-import org.json.JSONException;
-import org.json.JSONObject;
-
 import java.io.File;
 import java.io.IOException;
-import java.util.List;
-import java.util.logging.Level;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -60,7 +45,8 @@ public class MainActivity extends AppCompatActivity {
 
     EditText firstUpcText = null;
     EditText secondUpcText = null;
-
+    TextView outputText = null;
+    StringBuilder buildOutput = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -77,8 +63,8 @@ public class MainActivity extends AppCompatActivity {
         secondUpcText = (EditText) findViewById(R.id.secondUpcText);
         secondUpcText.setRawInputType(Configuration.KEYBOARD_QWERTY);
 
-        final TextView outputText = (TextView) findViewById(R.id.output);
-        final RequestQueue queue = Volley.newRequestQueue(this);
+        buildOutput = new StringBuilder();
+        outputText = (TextView) findViewById(R.id.output);
 
         if (savedInstanceState != null) {
             mImageUri = Uri.parse(savedInstanceState.getString(SAVED_INSTANCE_URI));
@@ -103,52 +89,28 @@ public class MainActivity extends AppCompatActivity {
 
         getButton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-                //TODO: Move functionality to RestUtilities but preserve asychronous behaviour of volley
+                //TODO: Move functionality to RestUtilities but preserve asynchronous behaviour of volley
 
-                final String upc = firstUpcText.getText().toString();
-                Log.d(Level.SEVERE.toString(), "upc: " + upc);
-                if (upc.equals("")) {
-                    Toast.makeText(MainActivity.this, "Scan or input barcodes first!", Toast.LENGTH_SHORT).show();
-                } else {
-                    List<String> features;
-                    String url = utils.getNutrientInformation(upc);
-                    Log.d(Level.SEVERE.toString(), "url: " + url);
+                final String firstUpc = firstUpcText.getText().toString();
 
-                    StringRequest stringRequest = new StringRequest(Request.Method.GET, url,
-                            new Response.Listener<String>() {
-                                @Override
-                                public void onResponse(String response) {
-                                    try {
-                                        Log.d(Level.SEVERE.toString(), "response: \n" + response);
-                                        JSONObject obj = new JSONObject(response);
-                                        ResponseParser rp = new ResponseParser(obj);
-                                        List<String> features = rp.getFeatures();
-                                        StringBuilder sb = new StringBuilder();
-                                        sb.append("List of nutrients");
-                                        sb.append("\n");
-                                        for (String feature : features) {
-                                            sb.append(feature);
-                                            sb.append("\n");
-                                        }
-                                        outputText.setText(sb.toString());
-                                    } catch (JSONException e) {
-                                        Toast.makeText(MainActivity.this, "Error with JSON parsing.", Toast.LENGTH_SHORT).show();
-                                        Log.d(Level.SEVERE.toString(), "Error with JSON parsing.");
+                final String secondUpc = secondUpcText.getText().toString();
 
-                                    }
-                                }
-                            }, new Response.ErrorListener() {
-                        @Override
-                        public void onErrorResponse(VolleyError error) {
-                            Toast.makeText(MainActivity.this, "Error getting response.", Toast.LENGTH_SHORT).show();
-                            Log.d(Level.SEVERE.toString(), "Error getting response.");
-
-                        }
-                    });
-
-                    //add request to the queue
-                    queue.add(stringRequest);
-                }
+                utils.getNutritionInformation(firstUpc, MainActivity.this, new VolleyCallback() {
+                    @Override
+                    public void onSuccess(String result) {
+                        Log.d("onResponse", "result: " + result);
+                        Log.d("getButtonFunctionality", "evaluated output: " + result);
+                        outputText.append(result);
+                    }
+                });
+                utils.getNutritionInformation(secondUpc, MainActivity.this, new VolleyCallback() {
+                    @Override
+                    public void onSuccess(String result) {
+                        Log.d("onResponse", "result: " + result);
+                        Log.d("getButtonFunctionality", "evaluated output: " + result);
+                        outputText.append(result);
+                    }
+                });
             }
         });
     }
@@ -177,13 +139,14 @@ public class MainActivity extends AppCompatActivity {
                 if (mDetector.isOperational() && bitmap != null) {
                     Frame frame = new Frame.Builder().setBitmap(bitmap).build();
                     SparseArray<Barcode> barcodes = mDetector.detect(frame);
+                    Barcode code = null;
 
                     if (barcodes.size() == 0) {
                         Toast.makeText(this, "Could not detect any barcodes.", Toast.LENGTH_SHORT).show();
-                    } else {
-                        Barcode code = barcodes.valueAt(0);
+                    } else if (barcodes.size() == 1) {
+                        code = barcodes.valueAt(0);
                         firstUpcText.setText(code.rawValue + "\n");
-
+                    } else if (barcodes.size() == 2) {
                         code = barcodes.valueAt(1);
                         secondUpcText.setText(code.rawValue + "\n");
                     }
