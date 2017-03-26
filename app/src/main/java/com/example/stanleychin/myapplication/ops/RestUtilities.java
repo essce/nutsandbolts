@@ -20,7 +20,9 @@ import com.example.stanleychin.myapplication.constants.APIConstants;
 import com.example.stanleychin.myapplication.interfaces.VolleyCallback;
 
 import org.json.JSONException;
+import org.json.JSONObject;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.logging.Level;
 
@@ -35,11 +37,22 @@ public class RestUtilities {
     protected Context context;
     private StringBuilder mBuildOutput;
 
-
+    /**
+     * For testing purposes, use a sample URL that returns a JSON string
+     *
+     * @param upc
+     * @return
+     */
     private String buildUrlFake(String upc) {
         return TESTING_REQUEST;
     }
 
+    /**
+     * Builds the URL that includes UPC and Credentials
+     *
+     * @param upc
+     * @return
+     */
     private String buildUrl(String upc) {
         String nutritionixId = APIConstants.NUTRITION_API_ID;
         String nutritionixKey = APIConstants.NUTRITION_API_KEY;
@@ -56,6 +69,14 @@ public class RestUtilities {
         return builder.build().toString();
     }
 
+    /**
+     * Makes a call to the nutritionix api to get the information of the nutrient
+     * Features are to be parsed with the ResponseParser and then further evaluated
+     *
+     * @param upc
+     * @param _context
+     * @param callback
+     */
     public void getNutritionInformation(String upc, MainActivity _context, final VolleyCallback callback) {
 
         if (upc.equals("") ) {
@@ -74,10 +95,14 @@ public class RestUtilities {
                     public void onResponse(String response) {
                         try {
                             Log.d("onResponse", "response: " + response);
+                            JSONObject obj = new JSONObject(response);
 
-                            ResponseParser rp = new ResponseParser(response);
-                            List<String> nutritionFeatures = rp.getFeatures();
-                            String nutritionFeaturesString = rp.printFeatures(nutritionFeatures);
+                            ResponseParser rp = new ResponseParser();
+                            rp.getFeatures(obj);
+                            double servFactor = rp.getServingsFactor(obj);
+                            rp.normalizeFeatures(servFactor);
+
+                            String nutritionFeaturesString = rp.printFeatures();
                             Log.d("onResponse", "features: " + nutritionFeaturesString);
 
                             callback.onSuccess(nutritionFeaturesString);
