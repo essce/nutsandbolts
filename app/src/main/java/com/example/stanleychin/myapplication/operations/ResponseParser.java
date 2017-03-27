@@ -1,4 +1,4 @@
-package com.example.stanleychin.myapplication.ops;
+package com.example.stanleychin.myapplication.operations;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -50,6 +50,7 @@ public class ResponseParser {
     private HashMap<String, Double> nutrientsMap;
     private static final double GRAM_TO_CUP = 0.422675281986; //100 gram = 0.4226 cup
     private static final double CUP_TO_GRAM = 1/GRAM_TO_CUP; //x cup = 100 gram
+    private static final double CAL_TO_KJ = 4.1868; //1 calories = 4.1868 energy
 
     public ResponseParser() throws JSONException {
         nutrientsMap = new HashMap<String, Double>();
@@ -64,7 +65,6 @@ public class ResponseParser {
 
         for (Nutrients nutrient : Nutrients.values()) {
             if (obj.has(nutrient.toString())) {
-                System.out.println(obj.get(nutrient.toString()));
                 if (obj.isNull(nutrient.toString())) {
                     nutrientsMap.put(nutrient.toString(), 0.0);
                 } else {
@@ -87,8 +87,7 @@ public class ResponseParser {
         String unit = obj.getString(Servings.nf_serving_size_unit.toString());
 
         double servingsFactor = 0.0;
-        System.out.println("unit: " + unit);
-        //first convert the unit to grams
+
         if (unit.equalsIgnoreCase("cup")) {
             servingsFactor = qty * CUP_TO_GRAM;
         }
@@ -102,16 +101,19 @@ public class ResponseParser {
      * @param servingsFactor
      */
     public void normalizeFeatures(double servingsFactor) {
-        for (Nutrients nutrient : Nutrients.values()) {
+        //TODO: this should check for if hashmap is already populated
 
+        for (Nutrients nutrient : Nutrients.values()) {
             //convert all to per 100g
             if (nutrientsMap.containsKey((nutrient.toString()))) {
                 double size = nutrientsMap.get(nutrient.toString());
                 nutrientsMap.put(nutrient.toString(), size * servingsFactor);
-            } else { // these entries are not found from API, set it to 0
-                nutrientsMap.put(nutrient.toString(), 0.0);
             }
         }
+
+        // convert calories to energy
+        double cals = nutrientsMap.get(Nutrients.nf_calories.toString());
+        nutrientsMap.put(Nutrients.nf_calories.toString(), cals*CAL_TO_KJ);
     }
 
     /**

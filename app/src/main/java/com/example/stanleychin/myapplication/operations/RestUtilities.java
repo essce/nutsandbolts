@@ -1,4 +1,4 @@
-package com.example.stanleychin.myapplication.ops;
+package com.example.stanleychin.myapplication.operations;
 
 /**
  * Created by stanleychin on 2017-03-02.
@@ -22,8 +22,6 @@ import com.example.stanleychin.myapplication.interfaces.VolleyCallback;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.util.HashMap;
-import java.util.List;
 import java.util.logging.Level;
 
 public class RestUtilities {

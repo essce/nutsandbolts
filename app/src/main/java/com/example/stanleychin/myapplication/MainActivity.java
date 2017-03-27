@@ -24,7 +24,7 @@ import android.widget.Toast;
 
 import com.example.stanleychin.myapplication.interfaces.VolleyCallback;
 import com.example.stanleychin.myapplication.constants.APIConstants;
-import com.example.stanleychin.myapplication.ops.RestUtilities;
+import com.example.stanleychin.myapplication.operations.RestUtilities;
 import com.google.android.gms.vision.Frame;
 import com.google.android.gms.vision.barcode.Barcode;
 import com.google.android.gms.vision.barcode.BarcodeDetector;
