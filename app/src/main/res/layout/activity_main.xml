@@ -1,80 +1,30 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<android.support.design.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="com.example.stanleychin.myapplication.MainActivity">
+    tools:context="com.example.stanleychin.myapplication.LandingPageActivity">
 
-    <LinearLayout
+    <android.support.design.widget.AppBarLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical" >
-        <TableRow
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="center"
-            android:weightSum="10">
+        android:theme="@style/AppTheme.AppBarOverlay">
 
-        </TableRow>
+    </android.support.design.widget.AppBarLayout>
 
-        <EditText
-            android:id="@+id/firstUpcText"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:ems="10"
-            android:hint="Enter UPC Code"
-            android:inputType="textPersonName"
-            tools:layout_editor_absoluteX="98dp"
-            tools:layout_editor_absoluteY="30dp" />
+    <include layout="@layout/content_landing_page"
+        android:id="@+id/include" />
 
-        <EditText
-            android:id="@+id/secondUpcText"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:ems="10"
-            android:hint="Enter UPC Code"
-            android:inputType="textPersonName"
-            tools:layout_editor_absoluteX="98dp"
-            tools:layout_editor_absoluteY="30dp" />
+    <Button
+        android:id="@+id/scanBarcodesButton"
+        android:layout_width="344dp"
+        android:layout_height="104dp"
+        android:layout_gravity="center_vertical|center_horizontal"
+        android:text="@string/scan_barcodes"
+        android:background="@drawable/rounded_button"
+        android:textSize="30sp"
+        app:layout_anchor="@+id/include"
+        app:layout_anchorGravity="center_vertical|center_horizontal" />
 
-        <TableRow
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content">
-
-        </TableRow>
-
-        <Button
-            android:id="@+id/getButton"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Get Food"
-            tools:layout_editor_absoluteX="431dp"
-            tools:layout_editor_absoluteY="709dp" />
-
-        <TableRow
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:baselineAligned="false"
-            android:orientation="vertical">
-
-            <TextView
-                android:id="@+id/output"
-                android:layout_width="400dp"
-                android:layout_height="500dp"
-                android:layout_weight="1"
-                tools:layout_editor_absoluteX="16dp"
-                tools:layout_editor_absoluteY="197dp" />
-
-            <Button
-                android:id="@+id/scanButton"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Scan Barcode" />
-
-        </TableRow>
-
-    </LinearLayout>
-
-
-</ScrollView>
+</android.support.design.widget.CoordinatorLayout>

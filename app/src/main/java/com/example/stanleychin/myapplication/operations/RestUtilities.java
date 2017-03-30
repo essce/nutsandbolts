@@ -6,6 +6,7 @@ package com.example.stanleychin.myapplication.operations;
 
 import android.content.Context;
 import android.net.Uri;
+import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -75,8 +76,8 @@ public class RestUtilities {
      * @param _context
      * @param callback
      */
-    public void getNutritionInformation(String upc, MainActivity _context, final VolleyCallback callback) {
-
+    public void getNutritionInformation(String upc, AppCompatActivity _context, final VolleyCallback callback) {
+        //TODO: 404 response codes = product isn't in database
         if (upc.equals("") ) {
             return;
         }

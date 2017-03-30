@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:paddingLeft="16dp"
+    android:paddingRight="16dp"
+    android:orientation="vertical"
+    android:weightSum="1">
+
+    <TableRow
+        android:layout_width="379dp"
+        android:layout_height="140dp" />
+
+    <EditText
+        android:id="@+id/upcText1"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:hint="@string/upc_hint" />
+
+    <EditText
+        android:id="@+id/upcText2"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:hint="@string/upc_hint" />
+
+    <Button
+        android:id="@+id/getNutrientsButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="right"
+        android:background="@drawable/rounded_button"
+        android:text="@string/compare" />
+
+    <TableRow
+        android:layout_width="376dp"
+        android:layout_height="231dp"
+        android:layout_weight="0.91" />
+
+    <Button
+        android:id="@+id/scanBarcodesButton"
+        android:layout_width="378dp"
+        android:layout_height="wrap_content"
+        android:layout_gravity="right"
+        android:background="@drawable/rounded_button"
+        android:text="@string/rescan" />
+
+</LinearLayout>

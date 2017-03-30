@@ -1,3 +1,8 @@
 <resources>
     <string name="app_name">My Application</string>
+    <string name="title_activity_landing_page">LandingPageActivity</string>
+    <string name="scan_barcodes"><b>Scan Barcodes</b></string>
+    <string name="rescan"><b>Rescan</b></string>
+    <string name="compare"><b>Compare</b></string>
+    <string name="upc_hint"><b>Enter UPC code here</b></string>
 </resources>

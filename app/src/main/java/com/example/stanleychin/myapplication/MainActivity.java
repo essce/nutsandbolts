@@ -4,7 +4,6 @@ import android.Manifest;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
@@ -18,13 +17,9 @@ import android.util.Log;
 import android.util.SparseArray;
 import android.view.View;
 import android.widget.Button;
-import android.widget.EditText;
-import android.widget.TextView;
 import android.widget.Toast;
 
-import com.example.stanleychin.myapplication.interfaces.VolleyCallback;
 import com.example.stanleychin.myapplication.constants.APIConstants;
-import com.example.stanleychin.myapplication.operations.RestUtilities;
 import com.google.android.gms.vision.Frame;
 import com.google.android.gms.vision.barcode.Barcode;
 import com.google.android.gms.vision.barcode.BarcodeDetector;
@@ -33,7 +28,6 @@ import java.io.File;
 import java.io.IOException;
 
 public class MainActivity extends AppCompatActivity {
-
     private static final String LOG_TAG = "Barcode Scanner API";
     private static final int PHOTO_REQUEST = 10;
     private static final int REQUEST_WRITE_PERMISSION = 20;
@@ -43,42 +37,21 @@ public class MainActivity extends AppCompatActivity {
     private BarcodeDetector mDetector;
     private Uri mImageUri;
 
-    EditText firstUpcText = null;
-    EditText secondUpcText = null;
-    TextView outputText = null;
-    StringBuilder buildOutput = null;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        final RestUtilities utils = new RestUtilities();
-
-        final Button getButton = (Button) findViewById(R.id.getButton);
-        final Button scanButton = (Button) findViewById(R.id.scanButton);
-
-        firstUpcText = (EditText) findViewById(R.id.firstUpcText);
-        firstUpcText.setRawInputType(Configuration.KEYBOARD_QWERTY);
-        secondUpcText = (EditText) findViewById(R.id.secondUpcText);
-        secondUpcText.setRawInputType(Configuration.KEYBOARD_QWERTY);
-
-        buildOutput = new StringBuilder();
-        outputText = (TextView) findViewById(R.id.output);
-
-        if (savedInstanceState != null) {
-            mImageUri = Uri.parse(savedInstanceState.getString(SAVED_INSTANCE_URI));
-            firstUpcText.setText(savedInstanceState.getString(SAVED_INSTANCE_RESULT));
-            secondUpcText.setText(savedInstanceState.getString(SAVED_INSTANCE_RESULT));
-        }
-
+        Button scanButton = (Button) findViewById(R.id.scanBarcodesButton);
         scanButton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 ActivityCompat.requestPermissions(MainActivity.this, new
                         String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, REQUEST_WRITE_PERMISSION);
             }
         });
-
+        if (savedInstanceState != null) {
+            mImageUri = Uri.parse(savedInstanceState.getString(SAVED_INSTANCE_URI));
+        }
         mDetector = new BarcodeDetector.Builder(getApplicationContext())
                 .setBarcodeFormats(Barcode.UPC_A | Barcode.PRODUCT)
                 .build();
@@ -87,34 +60,6 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
 
-        getButton.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-                //TODO: Move functionality to RestUtilities but preserve asynchronous behaviour of volley
-
-                final String firstUpc = firstUpcText.getText().toString();
-                final String secondUpc = secondUpcText.getText().toString();
-                // sample upc codes
-                // 068200010113
-                // 057000330002
-
-                utils.getNutritionInformation(firstUpc, MainActivity.this, new VolleyCallback() {
-                    @Override
-                    public void onSuccess(String result) {
-                        Log.d("onResponse", "result: " + result);
-                        Log.d("getButtonFunctionality", "evaluated output: " + result);
-                        outputText.append(result);
-                    }
-                });
-                utils.getNutritionInformation(secondUpc, MainActivity.this, new VolleyCallback() {
-                    @Override
-                    public void onSuccess(String result) {
-                        Log.d("onResponse", "result: " + result);
-                        Log.d("getButtonFunctionality", "evaluated output: " + result);
-                        outputText.append(result);
-                    }
-                });
-            }
-        });
     }
 
     @Override
@@ -134,6 +79,9 @@ public class MainActivity extends AppCompatActivity {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 
         if (requestCode == PHOTO_REQUEST && resultCode == RESULT_OK && data != null) {
+
+            String[] barcodesStorage = new String[2];
+
             launchMediaScanIntent();
             try {
                 Bitmap bitmap = BitmapFactory.decodeStream(getContentResolver().openInputStream(mImageUri));
@@ -141,16 +89,13 @@ public class MainActivity extends AppCompatActivity {
                 if (mDetector.isOperational() && bitmap != null) {
                     Frame frame = new Frame.Builder().setBitmap(bitmap).build();
                     SparseArray<Barcode> barcodes = mDetector.detect(frame);
-                    Barcode code = null;
 
                     if (barcodes.size() == 0) {
                         Toast.makeText(this, "Could not detect any barcodes.", Toast.LENGTH_SHORT).show();
                     } else if (barcodes.size() == 1) {
-                        code = barcodes.valueAt(0);
-                        firstUpcText.setText(code.rawValue + "\n");
+                        barcodesStorage[0] = barcodes.valueAt(0).rawValue;
                     } else if (barcodes.size() == 2) {
-                        code = barcodes.valueAt(1);
-                        secondUpcText.setText(code.rawValue + "\n");
+                        barcodesStorage[1] = barcodes.valueAt(1).rawValue;
                     }
 
                 } else {
@@ -161,6 +106,13 @@ public class MainActivity extends AppCompatActivity {
                 Log.e(LOG_TAG, e.toString());
             } finally {
                 deleteImage(this, mImageUri);
+
+                if (barcodesStorage[0] != null) {
+                    Intent intent = new Intent(this, LandingPageActivity.class);
+                    intent.putExtra("barcode1", barcodesStorage[0]);
+                    intent.putExtra("barcode2", barcodesStorage[1]);
+                    startActivity(intent);
+                }
             }
         }
     }
@@ -207,8 +159,6 @@ public class MainActivity extends AppCompatActivity {
     protected void onSaveInstanceState(Bundle outState) {
         if (mImageUri != null) {
             outState.putString(SAVED_INSTANCE_URI, mImageUri.toString());
-            outState.putString(SAVED_INSTANCE_RESULT, firstUpcText.getText().toString());
-            outState.putString(SAVED_INSTANCE_RESULT, secondUpcText.getText().toString());
         }
         super.onSaveInstanceState(outState);
     }
@@ -224,6 +174,8 @@ public class MainActivity extends AppCompatActivity {
         return (getContentResolver().delete(uri, null, null) > 0);
 
     }
+
+
 
 
 }
