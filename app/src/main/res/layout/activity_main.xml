@@ -1,30 +1,45 @@
 <?xml version="1.0" encoding="utf-8"?>
-<android.support.design.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="com.example.stanleychin.myapplication.LandingPageActivity">
+    android:orientation="vertical"
+    tools:context="com.example.stanleychin.myapplication.MainActivity"
+    android:weightSum="1">
 
-    <android.support.design.widget.AppBarLayout
+
+    <TableRow
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:theme="@style/AppTheme.AppBarOverlay">
+        android:layout_height="212dp">
 
-    </android.support.design.widget.AppBarLayout>
+        <com.airbnb.lottie.LottieAnimationView
+            android:id="@+id/animation_view"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:lottie_fileName="empty_state.json"
+            app:lottie_loop="true"
+            app:lottie_autoPlay="true" />
 
-    <include layout="@layout/content_landing_page"
-        android:id="@+id/include" />
+    </TableRow>
 
-    <Button
-        android:id="@+id/scanBarcodesButton"
-        android:layout_width="344dp"
-        android:layout_height="104dp"
-        android:layout_gravity="center_vertical|center_horizontal"
-        android:text="@string/scan_barcodes"
-        android:background="@drawable/rounded_button"
-        android:textSize="30sp"
-        app:layout_anchor="@+id/include"
-        app:layout_anchorGravity="center_vertical|center_horizontal" />
 
-</android.support.design.widget.CoordinatorLayout>
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="122dp"
+        android:orientation="horizontal"
+        android:layout_gravity="center_horizontal|center_vertical">
+
+        <Button
+            android:id="@+id/scanBarcodesButton"
+            android:layout_width="match_parent"
+            android:layout_height="86dp"
+            android:background="@drawable/rounded_button"
+            android:text="@string/scan_barcodes"
+            android:textSize="30sp" />
+
+    </LinearLayout>
+
+
+
+</LinearLayout>

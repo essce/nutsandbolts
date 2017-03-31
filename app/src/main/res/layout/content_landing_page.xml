@@ -8,4 +8,5 @@
     tools:context="com.example.stanleychin.myapplication.LandingPageActivity"
     tools:showIn="@layout/landing_page">
 
+
 </android.support.constraint.ConstraintLayout>

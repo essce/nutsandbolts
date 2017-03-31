@@ -20,7 +20,8 @@
             android:name="com.google.android.gms.vision.DEPENDENCIES"
             android:value="barcode" />
 
-        <activity android:name=".MainActivity">
+        <activity android:name=".MainActivity"
+            android:label="@string/title">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -40,8 +41,8 @@
 
         <activity
             android:name=".LandingPageActivity"
-            android:label="@string/title_activity_landing_page"
-            android:theme="@style/AppTheme"></activity>
+            android:label="@string/title"
+            android:theme="@style/AppTheme" />
     </application>
 
 </manifest>

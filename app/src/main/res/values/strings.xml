@@ -5,4 +5,6 @@
     <string name="rescan"><b>Rescan</b></string>
     <string name="compare"><b>Compare</b></string>
     <string name="upc_hint"><b>Enter UPC code here</b></string>
+    <string name="title_activity_take_picture">takePicture</string>
+    <string name="title">Evaluate Your Foods</string>
 </resources>

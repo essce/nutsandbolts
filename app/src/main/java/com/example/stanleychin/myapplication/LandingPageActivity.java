@@ -1,6 +1,5 @@
 package com.example.stanleychin.myapplication;
 
-import android.content.res.Configuration;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -16,7 +15,6 @@ public class LandingPageActivity extends AppCompatActivity {
 
     EditText firstUpcText = null;
     EditText secondUpcText = null;
-    TextView outputText = null;
     StringBuilder buildOutput = null;
     
     @Override
@@ -27,6 +25,8 @@ public class LandingPageActivity extends AppCompatActivity {
         final RestUtilities utils = new RestUtilities();
 
         final Button getButton = (Button) findViewById(R.id.getNutrientsButton);
+        final Button scanButton = (Button) findViewById(R.id.scanBarcodesButton);
+        scanButton.setVisibility(0);
         String barcode1 = getIntent().getStringExtra("barcode1");
         String barcode2 = getIntent().getStringExtra("barcode2");
 

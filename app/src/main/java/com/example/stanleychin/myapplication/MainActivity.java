@@ -1,7 +1,6 @@
 package com.example.stanleychin.myapplication;
 
 import android.Manifest;
-import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
@@ -19,6 +18,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
 
+import com.airbnb.lottie.LottieAnimationView;
 import com.example.stanleychin.myapplication.constants.APIConstants;
 import com.google.android.gms.vision.Frame;
 import com.google.android.gms.vision.barcode.Barcode;
@@ -32,8 +32,6 @@ public class MainActivity extends AppCompatActivity {
     private static final int PHOTO_REQUEST = 10;
     private static final int REQUEST_WRITE_PERMISSION = 20;
     private static final String SAVED_INSTANCE_URI = "uri";
-    private static final String SAVED_INSTANCE_RESULT = "result";
-    private String mCurrentPhotoPath;
     private BarcodeDetector mDetector;
     private Uri mImageUri;
 
@@ -57,14 +55,17 @@ public class MainActivity extends AppCompatActivity {
                 .build();
         if (!mDetector.isOperational()) {
             Toast.makeText(MainActivity.this, "Could not set up the detector!", Toast.LENGTH_SHORT).show();
-            return;
         }
+
+        LottieAnimationView animationView = (LottieAnimationView) findViewById(R.id.animation_view);
+        animationView.setAnimation("empty_state.json");
+        animationView.loop(true);
+        animationView.playAnimation();
 
     }
 
     @Override
-    public void onRequestPermissionsResult(int requestCode, String[] permissions,
-                                           int[] grantResults) {
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == REQUEST_WRITE_PERMISSION) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
@@ -105,7 +106,7 @@ public class MainActivity extends AppCompatActivity {
                 Toast.makeText(this, "Failed to load Image", Toast.LENGTH_SHORT).show();
                 Log.e(LOG_TAG, e.toString());
             } finally {
-                deleteImage(this, mImageUri);
+                deleteImage(mImageUri);
 
                 if (barcodesStorage[0] != null) {
                     Intent intent = new Intent(this, LandingPageActivity.class);
@@ -144,15 +145,7 @@ public class MainActivity extends AppCompatActivity {
         // Create an image file name
         String imageFileName = "pic";
         File storageDir = getExternalFilesDir(Environment.DIRECTORY_PICTURES);
-        File image = File.createTempFile(
-                imageFileName,  /* prefix */
-                ".jpg",         /* suffix */
-                storageDir      /* directory */
-        );
-
-        // Save a file: path for use with ACTION_VIEW intents
-        mCurrentPhotoPath = image.getAbsolutePath();
-        return image;
+        return File.createTempFile(imageFileName, ".jpg", storageDir);
     }
 
     @Override
@@ -169,7 +162,7 @@ public class MainActivity extends AppCompatActivity {
         this.sendBroadcast(mediaScanIntent);
     }
 
-    private boolean deleteImage(Context ctx, Uri uri) {
+    private boolean deleteImage(Uri uri) {
 
         return (getContentResolver().delete(uri, null, null) > 0);
 
